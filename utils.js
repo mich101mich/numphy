@@ -7,12 +7,14 @@
 
 /**
 * @param {{ [x: string]: Variable; }} variables
-* @param {{ (): void }} reset_callback
+* @param {{ (key: string): void }} reset_callback
 */
 function setup_vars(variables, reset_callback) {
     let pre_digits = 0;
     let post_digits = 0;
+    let name_length = 0;
     for (const key in variables) {
+        name_length = Math.max(key.length, name_length);
         const v = variables[key];
         for (const num of [v.min, v.max, v.step]) {
             const [pre, post] = num.toString().split(".");
@@ -32,7 +34,7 @@ function setup_vars(variables, reset_callback) {
         v.label = document.createElement("label");
         v.label.htmlFor = "slider_" + key;
         v.label.style.fontFamily = "monospace";
-        v.label.innerHTML = `${key}: ${pad_float(v.value, pre_digits, post_digits)}`
+        v.label.innerHTML = `${left_pad(key, name_length)}: ${pad_float(v.value, pre_digits, post_digits)}`
         v.slider = document.createElement("input");
         v.slider.type = "range";
         v.slider.id = "slider_" + key;
@@ -47,8 +49,8 @@ function setup_vars(variables, reset_callback) {
 
         v.slider.addEventListener("input", e => {
             v.value = parseFloat(v.slider.value);
-            v.label.innerHTML = `${key}: ${pad_float(v.value, pre_digits, post_digits)}`;
-            reset_callback();
+            v.label.innerHTML = `${left_pad(key, name_length)}: ${pad_float(v.value, pre_digits, post_digits)}`;
+            reset_callback(key);
         });
     }
     document.body.appendChild(div);
@@ -108,9 +110,7 @@ function draw_point(c, x, y, bounds, start = false) {
  */
 function pad_float(s, pre_len, post_len) {
     let [pre, post] = s.toString().split(".");
-    for (let i = pre.length; i < pre_len; i++) {
-        pre = "&nbsp;" + pre;
-    }
+    pre = left_pad(pre, pre_len);
     if (post_len == 0) {
         return pre;
     }
@@ -119,4 +119,16 @@ function pad_float(s, pre_len, post_len) {
         post += "&nbsp;";
     }
     return pre + "." + post;
+}
+
+/**
+ * @param {any} s
+ * @param {number} len
+ */
+function left_pad(s, len, char = "&nbsp;") {
+    let ret = s.toString();
+    for (let i = ret.length; i < len; i++) {
+        ret = char + ret;
+    }
+    return ret;
 }
